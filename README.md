@@ -1,4 +1,4 @@
-# **Parallel SAT Solver using CUDA - Odell Blackmon III & Viraj Puri
+# **Parallel SAT Solver using CUDA - Odell Blackmon III & Viraj Puri**
 
 ## **Summary**
 We are going to implement a parallelized version of the DPLL algorithm for solving SAT problems. We plan to accomplish this using the NVIDIA CUDA GPUs. Using CUDA, we intend to show how/if parallelization of the algorithm would speed up computation in this case, whether it scales well/to what extent as the number of threads/cores increases, as well as how this compares to a serial implementation. This will be conveyed through visual representations such as graphs to display core speedup, as well as the effect of minor parameter tweakage such as number of blocks, dimensions, etc. 
