@@ -18,13 +18,13 @@ First and foremost, the primary development resource we will be using are the NV
 * 75%
   * A sequential SAT solver
   * A sequential SAT solver with adjustable time out
-100%
-A SAT solver that runs on GPUs
-Speedup graphs for different block sizes and thread counts
-125%
-An interactive SAT solver where a user can input a boolean expression and the program will output a solution if the expression is feasible
-The same interactive program will also output how many possible assignments exist, how many assignments were checked, and how long it took
-Output the tree that was constructed when trying different variable values to solve the SAT expression 
+* 100%
+  * A SAT solver that runs on GPUs
+  * Speedup graphs for different block sizes and thread counts
+* 125%
+  * An interactive SAT solver where a user can input a boolean expression and the program will output a solution if the expression is feasible
+  * The same interactive program will also output how many possible assignments exist, how many assignments were checked, and how long it took
+  * Output the tree that was constructed when trying different variable values to solve the SAT expression 
 
 ## **Platform Choice**
 Our platforms of choice are the C++ language, the CUDA toolkit, and the NVIDIA GPUs found in the GHC machines. The reasoning for these choices are multiple, starting with the basic fact that both team members in our group are most comfortable with CUDA among the various different choices of parallel toolkits available to us (such as OpenMP, MPI, etc). Additionally, C++ is not only the language of choice for the vast majority of projects/assignments in this course, but also is the primary language used in CUDA development, so it was only a natural choice. Furthermore, this makes debugging, as well as implementing any stretch goals a much less tedious task, due to the vast majority of documentation available. C++ also happens to be one of the fastest languages available, second only to C, just being a bit safer, making it ideal for not only showing pure speedup, but also having a balance of ease of implementation. Finally, both members in our group also thought it would be interesting to use GPU resources as a means to implement something that users would not think traditionally would benefit from GPU resources, in contrast to an example such as rendering an image, or graphic manipulation. 
