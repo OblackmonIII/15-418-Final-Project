@@ -31,7 +31,7 @@ Our platforms of choice are the C++ language, the CUDA toolkit, and the NVIDIA G
 
 ## **Schedule**
 | Week | Items |
-| ____ | _____ |
+| ---- | ----- |
 Week 1 (Mar 21 - Mar 25)
 Finalize project idea/proposal, get environment/Git setup.
 Week 2 (Mar 28 - Apr 1)
