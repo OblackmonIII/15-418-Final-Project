@@ -15,9 +15,9 @@ The problem is challenging for a number of reasons. To begin, the search space c
 First and foremost, the primary development resource we will be using are the NVIDIA GPUs from the GHC machines. This is for one of several reasons, the primary being, not only are we familiar with/comfortable with development on these remote GPUs through the work that has been done so far in 15-418 (especially during Assignment 2 which focused primarily on CUDA development using the GHC machines), but also because the GPUs found on these machines (NVIDIA RTX 2080) is not only native to NVIDIA’s CUDA dev kit, but also is much faster than the integrated Intel GPU found in our local Macbook Pro laptops. Thus, the GHC machines would be ideal for development, as well as for scaling to a large number of cores/threads to display the sheer scaling benefits from our results. Additionally, we’re going to use the pseudocode for the DPLL algorithm found from CMU’s 15-414 course on bug catching, by Andrė Platzer, and Matt Fredrikson at https://www.cs.cmu.edu/~15414/f17/lectures/10-dpll.pdf for our serial version to be used as a benchmark, as well as a baseline reference to implement our parallel version in CUDA.
 
 ## **Goals and Deliverables**
-75%
-A sequential SAT solver
-A sequential SAT solver with adjustable time out
+* 75%
+  * A sequential SAT solver
+  * A sequential SAT solver with adjustable time out
 100%
 A SAT solver that runs on GPUs
 Speedup graphs for different block sizes and thread counts
