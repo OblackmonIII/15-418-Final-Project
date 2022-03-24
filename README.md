@@ -36,8 +36,7 @@ Our platforms of choice are the C++ language, the CUDA toolkit, and the NVIDIA G
 | Week 2 (Mar 28 - Apr 1) | Implement serial version, establish benchmark for serial version to improve on, compile baseline visualization, identify potential axes of parallelism. |
 | Week 3 (Apr 4 - Apr 8)| Begin to implement parallel version, work on/finish milestone report |
 | Week 4 (Apr 11 - Apr 15) MIDPOINT DUE | Finish implementing parallel version, tweak where necessary (such as number of threads per block) to identify best possible parallel version, begin work on visualizing results
-Week 5 (Apr 18 - Apr 22)
-Scale results up to a larger number of cores to identify where speedup gives diminishing returns on our machine, compile final graphs, as well as optimize code where necessary to identify best performance.
+| Week 5 (Apr 18 - Apr 22) | Scale results up to a larger number of cores to identify where speedup gives diminishing returns on our machine, compile final graphs, as well as optimize code where necessary to identify best performance. |
 Week 6 (Apr 25 - Apr 29)
 Finalize results, finish final report & submit, clean up code.
 Week 7 (May 2 - May 6)
