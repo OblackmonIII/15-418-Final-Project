@@ -48,6 +48,3 @@ Week 6 (Apr 25 - Apr 29)
 Finalize results, finish final report & submit, clean up code.
 Week 7 (May 2 - May 6)
 Work on final poster, ready/practice for 5 minute presentation.
-
-
-**
