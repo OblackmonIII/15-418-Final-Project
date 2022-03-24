@@ -26,6 +26,7 @@ First and foremost, the primary development resource we will be using are the NV
   * The same interactive program will also output how many possible assignments exist, how many assignments were checked, and how long it took
   * Output the tree that was constructed when trying different variable values to solve the SAT expression 
 
+![alt text](https://upload.wikimedia.org/wikipedia/commons/d/dc/Dpll11.png "Title")
 
 
 ## **Platform Choice**
