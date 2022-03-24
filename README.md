@@ -8,7 +8,7 @@ The boolean satisfiability problem or SAT problem is a popular problem of determ
 
 As mentioned above, the SAT Problem is NP-Complete, but there are still algorithms that can be used to come up with solutions. For instance, the Davis-Putnam-Logemann-Loveland algorithm is a backtracking based algorithm for finding a satisfiable assignment of variables if one exists. The worst case runtime of it is exponential, but this run time can be improved through parallelism. The search space for potential solutions can be split across parallel operating units. Thus, there are indeed different axes of parallelism, and not only do we seek to exploit such axes, but we also aim to use CUDA to figure out to what degree of improvement does speedup top out at in comparison to the serial version.
 
-# **The Challenge**
+## **The Challenge**
 The problem is challenging for a number of reasons. To begin, the search space can be exponential proportional to the number of variables. Even with a significant number of threads, key insights into parallelism will be needed to solve this problem. Secondly, synchronization across this many threads will be difficult to reason over since it is unclear at this moment how work will be divided amongst threads as well as where the overlaps in the work will appear. These are only some of the challenges that this project faces.
 
 ## **Resources**
@@ -25,6 +25,8 @@ First and foremost, the primary development resource we will be using are the NV
   * An interactive SAT solver where a user can input a boolean expression and the program will output a solution if the expression is feasible
   * The same interactive program will also output how many possible assignments exist, how many assignments were checked, and how long it took
   * Output the tree that was constructed when trying different variable values to solve the SAT expression 
+
+
 
 ## **Platform Choice**
 Our platforms of choice are the C++ language, the CUDA toolkit, and the NVIDIA GPUs found in the GHC machines. The reasoning for these choices are multiple, starting with the basic fact that both team members in our group are most comfortable with CUDA among the various different choices of parallel toolkits available to us (such as OpenMP, MPI, etc). Additionally, C++ is not only the language of choice for the vast majority of projects/assignments in this course, but also is the primary language used in CUDA development, so it was only a natural choice. Furthermore, this makes debugging, as well as implementing any stretch goals a much less tedious task, due to the vast majority of documentation available. C++ also happens to be one of the fastest languages available, second only to C, just being a bit safer, making it ideal for not only showing pure speedup, but also having a balance of ease of implementation. Finally, both members in our group also thought it would be interesting to use GPU resources as a means to implement something that users would not think traditionally would benefit from GPU resources, in contrast to an example such as rendering an image, or graphic manipulation. 
