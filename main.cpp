@@ -263,11 +263,11 @@ std::vector<set<int> > pure_literal_assign(std::vector<set<int> > clauses, int p
         pure_literal_itr = clauses[i].find(pure_literal_variable);
         if(pure_literal_itr != clauses[i].end()){
             clauses[i].erase(pure_literal_itr);
+        }else{
+
+            new_clauses.push_back(clauses[i]);
         }
 
-        // TODO fix this
-        if(clauses[i])
-        new_clauses.push_back(clauses[i]);
     }
 
     return new_clauses;
@@ -316,10 +316,8 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
         clauses = pure_literal_assign(clauses, pure_literal);
     }
 
-    //cout << clauses_to_string(clauses, clauses.size()) << endl;
 
-    cout << "Number of clauses at this point: " << clauses.size() << endl;
-    if(clauses.size() == 0){
+    if(clauses.size() == 0 || (clauses.size() == 1 && clauses[0].size() == 0)){
 
         return 1;
     }
@@ -388,7 +386,7 @@ int main(int argc, char **argv){
     var_assignments[0] = false;
     var_assignments[1] = true;
 
-    cout << test_assignment(var_assignments, nvars, clauses, nclauses) << endl;
+    //cout << test_assignment(var_assignments, nvars, clauses, nclauses) << endl;
     // Call DPLL on the struct
 
     int result = dpll(clauses, nclauses, nvars);
