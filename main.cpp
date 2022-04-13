@@ -41,23 +41,18 @@ bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int>> clau
     return result;
 }
 
-std::string clauses_to_string(std::vector<set<int>> clauses, int nclauses){
+std::string clauses_to_string(std::vector<set<int> > clauses, int nclauses){
 
-    cout << "GGG" << endl;
     std::string result = "";
     for(int i = 0; i < nclauses; i++){
 
-        cout << "HHH" << endl;
         set<int>::iterator itr;
-        cout << "III" << endl;
         for(itr = clauses[i].begin(); itr != clauses[i].end(); itr++){
             // Take absolute value of the variable
             // if the value is false, negate the assignment
             // otw, leave it the same             
 
-            cout << "CCC" << endl;
             result += to_string(*itr) + " | ";
-            cout << "DDD" << endl;
         } 
        
         result.resize(result.size() - 3);
@@ -100,13 +95,12 @@ std::set<int> parse_line_to_variables(std::string clause_string){
     return var_set;
 }
 
-void initialize_variables(ifstream *input_file, int *nvars, std::vector<set<int>> *clauses, int *nclauses){
+void initialize_variables(ifstream *input_file, int *nvars, std::vector<set<int> > *clauses, int *nclauses){
 
 
     // Get nvars and nclauses
     string line;
     std::getline(*input_file, line);    
-    cout << line << endl;
     std::vector<std::string> input_vars = get_clause_literal_vector(line);
 
     *nvars = std::stoi(input_vars[0]);
@@ -132,7 +126,7 @@ int main(int argc, char **argv){
     */
     int nvars;
     int nclauses;
-    std::vector<set<int>> clauses;
+    std::vector<set<int> > clauses;
 
     // Open file
     std::ifstream input_file;
@@ -156,9 +150,7 @@ int main(int argc, char **argv){
     */
 
 
-    cout << "AAA" << endl;
     std::string clauses_string = clauses_to_string(clauses, nclauses);
-    cout << "BBB" << endl;
     cout << clauses_string;
 
     // Call DPLL on the struct
