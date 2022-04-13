@@ -8,7 +8,7 @@
 
 using namespace std;
 
-bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int>> clauses, int nclauses){
+bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int> > clauses, int nclauses){
 
     // Iterate over clauses
     // Assign variables found in clauses based on array
@@ -19,9 +19,8 @@ bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int>> clau
     bool result = false;
     for(int i = 0; i < nclauses; i++){
         
-        // Get iterator for the set
-        //itr = clauses[i].begin();
-       
+        result = false;
+
         for(set<int>::iterator itr = clauses[i].begin(); itr != clauses[i].end(); itr++){
             // Take absolute value of the variable
             // if the value is false, negate the assignment
@@ -35,7 +34,6 @@ bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int>> clau
             return result;
         }
 
-        result = false;
     }
 
     return result;
@@ -43,6 +41,9 @@ bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int>> clau
 
 std::string clauses_to_string(std::vector<set<int> > clauses, int nclauses){
 
+    if(nclauses == 0){
+        return "";
+    }
     std::string result = "";
     for(int i = 0; i < nclauses; i++){
 
@@ -69,7 +70,7 @@ std::string clauses_to_string(std::vector<set<int> > clauses, int nclauses){
 std::vector<std::string> get_clause_literal_vector(std::string clause_string){
 
     string space_delimiter = " ";
-    vector<std::string> literals{};
+    vector<std::string> literals;
 
     size_t pos = 0;
     while ((pos = clause_string.find(space_delimiter)) != string::npos) {
@@ -115,6 +116,237 @@ void initialize_variables(ifstream *input_file, int *nvars, std::vector<set<int>
     
 }
 
+bool unit_clauses_present(std::vector<set<int> > clauses){
+
+    for(int i = 0; i < clauses.size(); i++){
+
+        if(clauses[i].size() == 1){
+
+            return true;
+        }
+    }
+
+
+    return false;
+}
+
+int find_unit_clause(std::vector<set<int> > clauses){
+
+    int unit_clause_variable = 0;
+
+    for(int i = 0; i < clauses.size(); i++){
+
+        if(clauses[i].size() == 1){
+
+            unit_clause_variable = *clauses[i].begin();
+            return unit_clause_variable;
+        }
+    }
+
+
+    return unit_clause_variable;
+
+}
+
+std::vector<set<int> > unit_propagate(std::vector<set<int> > clauses, int nclauses, int unit_clause_variable){
+
+    // Iterate over the clauses. Remove clauses that contain unit_clause_variable. Remove -1 * unit_clause_variable
+    // from clauses
+
+    std::vector<set<int> > new_clauses;
+    set<int>::iterator negation_itr;
+
+    for(int i = 0; i < nclauses; i++){
+
+        if(clauses[i].find(unit_clause_variable) == clauses[i].end()){
+            // If the clause does not contain the unit variable, then include in new_clauses without the negated variable
+
+            negation_itr = clauses[i].find(-1 * unit_clause_variable);
+            if(negation_itr == clauses[i].end()){
+                // Did not find negation so we can add clauses as is
+                new_clauses.push_back(clauses[i]);
+            }else{
+                // Did find negation, so remove negation then add clause
+                clauses[i].erase(negation_itr);
+                new_clauses.push_back(clauses[i]);
+            }
+
+        }else{
+            // This is the case where the clause does contain the unit variable, so we ignore
+            continue;
+        }
+    }
+
+    return new_clauses;    
+
+}
+bool pure_literals_present(std::vector<set<int> > clauses, int nvars){
+
+    bool literal_flag = false;
+    bool neg_literal_flag = false;
+
+    for(int i = 1; i <= nvars; i++){
+        // Check if i and its negation show up in any clause
+        // If not, it means it's pure and return true
+
+        for(int j = 0; j < clauses.size(); j++){
+
+            if(!literal_flag){
+
+                literal_flag = clauses[j].find(i) != clauses[j].end();
+            }
+
+            if(!neg_literal_flag){
+
+                neg_literal_flag = clauses[j].find(-1 * i) != clauses[j].end();
+            }
+
+        }
+
+        if(literal_flag ^ neg_literal_flag){
+
+            return true;
+
+        }
+    }
+
+    return false;
+}
+int find_pure_literal(std::vector<set<int> > clauses, int nvars){
+
+    int pure_literal_variable = 0;
+    bool literal_flag = false;
+    bool neg_literal_flag = false;
+
+    for(int i = 1; i <= nvars; i++){
+        // Check if i and its negation show up in any clause
+        // If not, it means it's pure and return true
+
+        for(int j = 0; j < clauses.size(); j++){
+
+            if(!literal_flag){
+
+                literal_flag = clauses[j].find(i) != clauses[j].end();
+            }
+
+            if(!neg_literal_flag){
+
+                neg_literal_flag = clauses[j].find(-1 * i) != clauses[j].end();
+            }
+
+        }
+
+        if(literal_flag ^ neg_literal_flag){
+
+            if(literal_flag){
+
+                pure_literal_variable = i;
+            }else{
+
+                pure_literal_variable = -1 * i;
+            }
+
+            return pure_literal_variable;
+
+        }
+    }
+
+    return pure_literal_variable;
+}
+
+std::vector<set<int> > pure_literal_assign(std::vector<set<int> > clauses, int pure_literal_variable){
+
+    std::vector<set<int> > new_clauses;
+    set<int>::iterator pure_literal_itr;
+
+    for(int i = 0; i < clauses.size(); i++){
+        pure_literal_itr = clauses[i].find(pure_literal_variable);
+        if(pure_literal_itr != clauses[i].end()){
+            clauses[i].erase(pure_literal_itr);
+        }
+
+        // TODO fix this
+        if(clauses[i])
+        new_clauses.push_back(clauses[i]);
+    }
+
+    return new_clauses;
+}
+bool check_for_empty_clauses(std::vector<set<int> > clauses){
+
+    for(int i = 0; i < clauses.size(); i++){
+
+        if(clauses[i].size() == 0){
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+set<int> get_literals(std::vector<set<int> > clauses){
+
+    set<int> literals;
+    for(int i = 0; i < clauses.size(); i++){
+
+        literals.insert(clauses[i].begin(), clauses[i].end());
+    }
+
+    return literals;
+}
+
+int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
+
+    // Return 1 if satisfiable
+    // Return -1 if unsatisfiable
+    int result = 0;
+    while(unit_clauses_present(clauses) && clauses.size() > 1){
+        int unit_clause_variable = find_unit_clause(clauses);
+
+        clauses = unit_propagate(clauses, clauses.size(), unit_clause_variable);
+
+        cout << clauses_to_string(clauses, clauses.size()) << endl;
+    }
+
+
+    while(pure_literals_present(clauses, nvars)){
+
+        int pure_literal = find_pure_literal(clauses, nvars);
+        clauses = pure_literal_assign(clauses, pure_literal);
+    }
+
+    //cout << clauses_to_string(clauses, clauses.size()) << endl;
+
+    cout << "Number of clauses at this point: " << clauses.size() << endl;
+    if(clauses.size() == 0){
+
+        return 1;
+    }
+
+    if(check_for_empty_clauses(clauses)){
+
+        return -1;
+    }
+
+    set<int> literals = get_literals(clauses);
+
+    int literal_choice = *(literals.begin());
+    set<int> new_set;
+    new_set.insert(literal_choice);
+    clauses.push_back(new_set);
+    result = dpll(clauses, clauses.size(), nvars);
+
+    if(result == -1){
+
+        clauses[clauses.size() - 1].erase(literal_choice);
+        clauses[clauses.size() - 1].insert(-1 * literal_choice);
+        result = dpll(clauses, clauses.size(), nvars);
+    }
+
+    return result;
+}
+
 int main(int argc, char **argv){
 
     // Read input
@@ -153,7 +385,15 @@ int main(int argc, char **argv){
     std::string clauses_string = clauses_to_string(clauses, nclauses);
     cout << clauses_string;
 
+    var_assignments[0] = false;
+    var_assignments[1] = true;
+
+    cout << test_assignment(var_assignments, nvars, clauses, nclauses) << endl;
     // Call DPLL on the struct
+
+    int result = dpll(clauses, nclauses, nvars);
+
+    cout << "1 if SAT -1 if not: " << result << endl;
     /*
     - Implement serial result
     */
