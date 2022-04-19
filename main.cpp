@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -39,29 +40,34 @@ bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int> > cla
     return result;
 }
 
-std::string clauses_to_string(std::vector<set<int> > clauses, int nclauses){
+std::string clauses_to_string(std::vector<set<int> > clauses){
 
-    if(nclauses == 0){
+    if(clauses.size() == 0){
         return "";
     }
     std::string result = "";
-    for(int i = 0; i < nclauses; i++){
+    for(int i = 0; i < clauses.size(); i++){
 
-        set<int>::iterator itr;
-        for(itr = clauses[i].begin(); itr != clauses[i].end(); itr++){
-            // Take absolute value of the variable
-            // if the value is false, negate the assignment
-            // otw, leave it the same             
+        if(clauses[i].size() != 0){
 
-            result += to_string(*itr) + " | ";
-        } 
-       
-        result.resize(result.size() - 3);
+            cout << to_string(clauses[i].size()) << endl;
+            set<int>::iterator itr;
+            for(itr = clauses[i].begin(); itr != clauses[i].end(); itr++){
+                // Take absolute value of the variable
+                // if the value is false, negate the assignment
+                // otw, leave it the same             
+                cout << *itr << endl;
+                result += to_string(*itr) + " | ";
+            } 
         
-        result += " & "; 
+            result.resize(result.size() - 3);
+
+            if(i != clauses.size() - 1){
+                result += " & "; 
+            }            
+        }
     }
-    
-    result.resize(result.size() - 3);
+
     result += "\n";
 
     return result;
@@ -69,28 +75,28 @@ std::string clauses_to_string(std::vector<set<int> > clauses, int nclauses){
 
 std::vector<std::string> get_clause_literal_vector(std::string clause_string){
 
-    string space_delimiter = " ";
-    vector<std::string> literals;
+    std::istringstream iss(clause_string);   
+    std::vector<std::string> result;
 
-    size_t pos = 0;
-    while ((pos = clause_string.find(space_delimiter)) != string::npos) {
-        literals.push_back(clause_string.substr(0, pos));
-        clause_string.erase(0, pos + space_delimiter.length());
+    string n;
+    while(iss >> n)
+    {
+        result.push_back(n);
     }
-    
-    literals.push_back(clause_string.substr(0, clause_string.size() - 2));
 
-    return literals;
+    return result;
 }
 
 std::set<int> parse_line_to_variables(std::string clause_string){
 
-    std::vector<string> clause_literal_vector = get_clause_literal_vector(clause_string);
     std::set<int> var_set;
 
-    for(int i = 0; i < clause_literal_vector.size(); i++){
-       
-       var_set.insert(std::stoi(clause_literal_vector[i])); 
+    std::istringstream iss(clause_string);   
+
+    int n;
+    while(iss >> n)
+    {
+        var_set.insert(n);
     }
 
     return var_set;
@@ -276,7 +282,8 @@ bool check_for_empty_clauses(std::vector<set<int> > clauses){
 
     for(int i = 0; i < clauses.size(); i++){
 
-        if(clauses[i].size() == 0){
+        cout << clauses[i].size() << endl;
+        if(clauses[i].empty()){
 
             return true;
         }
@@ -301,12 +308,13 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
     // Return 1 if satisfiable
     // Return -1 if unsatisfiable
     int result = 0;
+    cout << "AAA" << endl;
     while(unit_clauses_present(clauses) && clauses.size() > 1){
         int unit_clause_variable = find_unit_clause(clauses);
 
         clauses = unit_propagate(clauses, clauses.size(), unit_clause_variable);
 
-        cout << clauses_to_string(clauses, clauses.size()) << endl;
+        cout << clauses_to_string(clauses) << endl;
     }
 
 
@@ -317,11 +325,14 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
     }
 
 
-    if(clauses.size() == 0 || (clauses.size() == 1 && clauses[0].size() == 0)){
+    // Check if there are no more clauses
+    if(clauses.size() == 0){
 
+        cout << "BBB" << endl;
         return 1;
     }
 
+    // Check for empty clauses
     if(check_for_empty_clauses(clauses)){
 
         return -1;
@@ -380,7 +391,7 @@ int main(int argc, char **argv){
     */
 
 
-    std::string clauses_string = clauses_to_string(clauses, nclauses);
+    std::string clauses_string = clauses_to_string(clauses);
     cout << clauses_string;
 
     var_assignments[0] = false;
