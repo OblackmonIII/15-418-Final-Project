@@ -9,6 +9,7 @@
 
 using namespace std;
 
+
 bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int> > clauses, int nclauses){
 
     // Iterate over clauses
@@ -308,7 +309,6 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
     // Return 1 if satisfiable
     // Return -1 if unsatisfiable
     int result = 0;
-    cout << "AAA" << endl;
     while(unit_clauses_present(clauses) && clauses.size() > 1){
         int unit_clause_variable = find_unit_clause(clauses);
 
@@ -328,7 +328,6 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
     // Check if there are no more clauses
     if(clauses.size() == 0){
 
-        cout << "BBB" << endl;
         return 1;
     }
 
@@ -397,15 +396,12 @@ int main(int argc, char **argv){
     var_assignments[0] = false;
     var_assignments[1] = true;
 
-    //cout << test_assignment(var_assignments, nvars, clauses, nclauses) << endl;
     // Call DPLL on the struct
 
     int result = dpll(clauses, nclauses, nvars);
 
-    cout << "1 if SAT -1 if not: " << result << endl;
-    /*
-    - Implement serial result
-    */
     // Print result
+    cout << "1 if SAT -1 if not: " << result << endl;
+
     return 0;
 }
