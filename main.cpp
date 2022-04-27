@@ -6,6 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+//#include "bruteForce.h"
 
 using namespace std;
 
@@ -28,7 +29,14 @@ bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int> > cla
             // if the value is false, negate the assignment
             // otw, leave it the same             
             int index = std::abs(*itr) - 1;
-            result = result || var_assignment[index];
+
+            if(*itr > 0){
+
+                result = result || var_assignment[index];
+            }else{
+
+                result = result || !var_assignment[index];
+            }
         } 
         
         if(!result){
@@ -304,7 +312,7 @@ set<int> get_literals(std::vector<set<int> > clauses){
     return literals;
 }
 
-int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
+int dpll(std::vector<set<int> > clauses, int nvars){
 
     // Return 1 if satisfiable
     // Return -1 if unsatisfiable
@@ -343,17 +351,52 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
     set<int> new_set;
     new_set.insert(literal_choice);
     clauses.push_back(new_set);
-    result = dpll(clauses, clauses.size(), nvars);
+    result = dpll(clauses, clauses.size());
 
     if(result == -1){
 
         clauses[clauses.size() - 1].erase(literal_choice);
         clauses[clauses.size() - 1].insert(-1 * literal_choice);
-        result = dpll(clauses, clauses.size(), nvars);
+        result = dpll(clauses, clauses.size());
     }
 
     return result;
 }
+
+
+int **clauses_to_array(std::vector<set<int>> clauses){
+
+    int **clauses_arr = (int **) malloc(clauses.size() * sizeof(int *));
+
+    for(int i = 0; i < clauses.size(); i++){
+        
+        clauses_arr[i] = (int *) malloc(clauses[i].size() * sizeof(int));
+
+        set<int>::iterator pure_literal_itr;
+        int j = 0;
+        for(pure_literal_itr = clauses[i].begin(); pure_literal_itr != clauses[i].end(); pure_literal_itr++){
+
+            clauses_arr[i][j] = *pure_literal_itr;
+            j++;
+        }
+    }
+
+
+    return clauses_arr;
+}
+
+int *get_clauses_length_arr(std::vector<set<int>> clauses){
+
+    int *clauses_length_arr = (int *) malloc(clauses.size() * sizeof(int));
+
+    for(int i = 0; i < clauses.size(); i++){
+
+        clauses_length_arr[i] = clauses[i].size();
+    }
+
+    return clauses_length_arr;
+}
+
 
 int main(int argc, char **argv){
 
@@ -394,11 +437,14 @@ int main(int argc, char **argv){
     cout << clauses_string;
 
     var_assignments[0] = false;
-    var_assignments[1] = true;
+    var_assignments[1] = false;
 
+    //cout << "Testing different assingments: " << test_assignment(var_assignments, nvars, clauses, nclauses) << endl;
     // Call DPLL on the struct
+    int result = dpll(clauses, nvars);
 
-    int result = dpll(clauses, nclauses, nvars);
+    // Call brute_force_parallel on the struct
+    //result = bruteForce::brute_force_parallel(clauses, nvars);
 
     // Print result
     cout << "1 if SAT -1 if not: " << result << endl;
