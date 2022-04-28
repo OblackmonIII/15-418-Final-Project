@@ -2,6 +2,7 @@
 #include <thrust/scan.h>
 #include <thrust/execution_policy.h>
 #include <thrust/device_vector.h>
+#include <stdio.h>
 
 __device__ int get_nth_bit(int value, int n){
 
@@ -110,29 +111,41 @@ int *BruteForce::get_clauses_length_arr(std::vector<std::set<int> > clauses){
 
 int BruteForce::brute_force_parallel(std::vector<std::set<int> > clauses, int nvars){
 
+    printf("Beginning of brute force on GPU\n");
     // Number of assignments
     int num_of_assignments = (double) pow(2.0, (double) nvars);
 
     // Allocate memory for the clauses on the host, fill with clause arrays, and move to the device
+    printf("Before clauses to array\n");
     int **clauses_arr_host = clauses_to_array(clauses);
+    printf("After clauses to array\n");
     int **clauses_arr_device;
+    printf("Before cudaMalloc\n");
     cudaMalloc(&clauses_arr_device, clauses.size() * sizeof(int *));
+    printf("After cudaMalloc\n");
     for(int i = 0; i < clauses.size(); i++){
 
+        // This is segfaulting
+        printf("AAA\n");
         cudaMalloc(&(clauses_arr_device[i]), clauses[i].size() * sizeof(int));
 
+        printf("BBB\n");
         // Copy values to device
         cudaMemcpy(clauses_arr_device[i], clauses_arr_host[i], clauses[i].size() * sizeof(int), cudaMemcpyHostToDevice);
+        printf("CCC\n");
     }
 
 
     // Allocate memory that maps clause index to the number of variables in the clause
     int *clauses_length_arr_host = get_clauses_length_arr(clauses);
+    printf("BBB");
     int *clauses_length_arr_device;
     cudaMalloc(&clauses_length_arr_device, clauses.size() * sizeof(int));
+    printf("CCC");
 
     // Copy values to device
     cudaMemcpy(clauses_length_arr_device, clauses_length_arr_host, clauses.size() * sizeof(int), cudaMemcpyHostToDevice);
+    printf("DDD");
 
     // Allocate memory for an array that stores the result of each assignment in an array of length 2^nvars
     int *var_assignment_output_host = (int *) malloc(sizeof(int) * num_of_assignments);
@@ -142,12 +155,13 @@ int BruteForce::brute_force_parallel(std::vector<std::set<int> > clauses, int nv
     // Spawn enough kernels to test all 2^nvars possible assignments
     int threadsPerBlock = 256;
     int blocksPerGrid = (num_of_assignments) / threadsPerBlock + 1;
-
+    printf("Calling kernel\n");
     // Call the kernel
     brute_force_kernel<<<blocksPerGrid, threadsPerBlock>>>(clauses_arr_device, clauses_length_arr_device, clauses.size(), var_assignment_output_device, num_of_assignments);
 
     // Synchronize threads
     cudaDeviceSynchronize();
+    printf("Ending kernel\n");
 
     // Move values back to host code
     cudaMemcpy(var_assignment_output_host, var_assignment_output_device, sizeof(int) * num_of_assignments, cudaMemcpyDeviceToHost);

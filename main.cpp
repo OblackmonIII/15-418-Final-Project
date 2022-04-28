@@ -6,7 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-//#include "bruteForce.h"
+#include "bruteForce.h"
 
 using namespace std;
 
@@ -59,13 +59,11 @@ std::string clauses_to_string(std::vector<set<int> > clauses){
 
         if(clauses[i].size() != 0){
 
-            cout << to_string(clauses[i].size()) << endl;
             set<int>::iterator itr;
             for(itr = clauses[i].begin(); itr != clauses[i].end(); itr++){
                 // Take absolute value of the variable
                 // if the value is false, negate the assignment
                 // otw, leave it the same             
-                cout << *itr << endl;
                 result += to_string(*itr) + " | ";
             } 
         
@@ -291,7 +289,6 @@ bool check_for_empty_clauses(std::vector<set<int> > clauses){
 
     for(int i = 0; i < clauses.size(); i++){
 
-        cout << clauses[i].size() << endl;
         if(clauses[i].empty()){
 
             return true;
@@ -322,7 +319,6 @@ int dpll(std::vector<set<int> > clauses, int nvars){
 
         clauses = unit_propagate(clauses, clauses.size(), unit_clause_variable);
 
-        cout << clauses_to_string(clauses) << endl;
     }
 
 
@@ -411,18 +407,41 @@ int main(int argc, char **argv){
     int nclauses;
     std::vector<set<int> > clauses;
 
+    string input_file_name;
+    string mode;
+
+    // Parsing commandline arguments
+    if(argc < 3){
+
+        cout << "Invalid number of arguments. Please try again by specifying an input file and computation mode" << endl;
+        return -1;
+    }
+
+    for(int i = 1; i < argc; i++){
+
+        if(string("-i").compare(argv[i]) == 0){
+
+            input_file_name = argv[i + 1];
+        }
+
+        if(string("-m").compare(argv[i]) == 0){
+
+            mode = argv[i + 1];
+        }
+    }
+
     // Open file
     std::ifstream input_file;
-    input_file.open(argv[1], std::ifstream::in);
+    input_file.open(input_file_name, std::ifstream::in);
     if(input_file.is_open()){
         
         initialize_variables(&input_file, &nvars, &clauses, &nclauses);
     }else{
-        
+
+        cout << "Failed to open file. Please ensure the file exists and the path is correct \n";
         return -1;
     }
 
-    //cin >> nvars >> nclauses;
     bool *var_assignments = new bool[nvars]; 
 
     // Construct SAT struct
@@ -441,10 +460,16 @@ int main(int argc, char **argv){
 
     //cout << "Testing different assingments: " << test_assignment(var_assignments, nvars, clauses, nclauses) << endl;
     // Call DPLL on the struct
-    int result = dpll(clauses, nvars);
+    int result;
+    if(mode == "serial"){
 
-    // Call brute_force_parallel on the struct
-    //result = bruteForce::brute_force_parallel(clauses, nvars);
+        result = dpll(clauses, nvars);
+
+    }else if(mode == "brute_force"){
+
+        BruteForce *bf = new BruteForce();
+        result = bf->brute_force_parallel(clauses, nvars);
+    }
 
     // Print result
     cout << "1 if SAT -1 if not: " << result << endl;
