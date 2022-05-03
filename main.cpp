@@ -338,7 +338,7 @@ int dpll(std::vector<set<int> > clauses, int nvars){
     // Check for empty clauses
     if(check_for_empty_clauses(clauses)){
 
-        return -1;
+        return 0;
     }
 
     set<int> literals = get_literals(clauses);
@@ -349,7 +349,7 @@ int dpll(std::vector<set<int> > clauses, int nvars){
     clauses.push_back(new_set);
     result = dpll(clauses, clauses.size());
 
-    if(result == -1){
+    if(result == 0){
 
         clauses[clauses.size() - 1].erase(literal_choice);
         clauses[clauses.size() - 1].insert(-1 * literal_choice);
@@ -472,7 +472,7 @@ int main(int argc, char **argv){
     }
 
     // Print result
-    cout << "1 if SAT -1 if not: " << result << endl;
+    cout << "1 if SAT 0 if not: " << result << endl;
 
     return 0;
 }

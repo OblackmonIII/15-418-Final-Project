@@ -9,7 +9,7 @@ __device__ int get_nth_bit(int value, int n){
     return (value >> n) & (1);
 }
 
-__device__ bool test_assignment(int var_assignment_val, int **clauses, int *clause_length_arr, int nclauses){
+__device__ bool test_assignment(int var_assignment_val, int *clauses, int *clause_length_arr, int nclauses){
 
     // Iterate over clauses
     // Assign variables found in clauses based on array
@@ -19,28 +19,36 @@ __device__ bool test_assignment(int var_assignment_val, int **clauses, int *clau
 
     bool result = false;
     bool var_assignment;
+    int starting_index = 0;
+    int nth_bit;
     for(int i = 0; i < nclauses; i++){
         
         result = false;
 
-        for(int j = 0; j < clause_length_arr[i]; j++){
+        for(int j = starting_index; j < starting_index + clause_length_arr[i]; j++){
             // Take absolute value of the variable
             // if the value is false, negate the assignment
             // otw, leave it the same             
-            int index = std::abs(clauses[i][j]) - 1;
-            var_assignment = get_nth_bit(var_assignment_val, index) == 0 ? false : true;
+            int index = std::abs(clauses[j]) - 1;
+            nth_bit = get_nth_bit(var_assignment_val, index);
+            var_assignment =  nth_bit == 0 ? false : true;
 
-            if(clauses[i][j] > 0){
+
+            if(clauses[j] > 0){
 
                 result = result || var_assignment;
             }else{
 
                 result = result || !var_assignment;
             }
+
         } 
+
+        starting_index += clause_length_arr[i];
         
         if(!result){
-        
+
+
             return result;
         }
 
@@ -49,7 +57,7 @@ __device__ bool test_assignment(int var_assignment_val, int **clauses, int *clau
     return result;
 }
 
-__global__ void brute_force_kernel(int **clauses_arr_device, int *clauses_length_arr_device, int nclauses, int *var_assignment_output_device, int num_of_assignments){
+__global__ void brute_force_kernel(int *clauses_arr_device, int *clauses_length_arr_device, int nclauses, int *var_assignment_output_device, int num_of_assignments){
 
     // Implementation ideas
     /* 
@@ -63,7 +71,9 @@ __global__ void brute_force_kernel(int **clauses_arr_device, int *clauses_length
     */
 
     int threadId = blockDim.x * blockIdx.x + threadIdx.x;
-    var_assignment_output_device[threadId] = test_assignment(threadId, clauses_arr_device, clauses_length_arr_device, nclauses);
+    int assignment_result = test_assignment(threadId, clauses_arr_device, clauses_length_arr_device, nclauses) ? 1 : 0;
+
+    var_assignment_output_device[threadId] = assignment_result;
 
 }
 
@@ -76,21 +86,24 @@ struct is_one
   }
 };
 
-__host__ int **BruteForce::clauses_to_array(std::vector<std::set<int> > clauses){
+__host__ int *BruteForce::clauses_to_array(std::vector<std::set<int> > clauses){
 
-    int **clauses_arr = (int **) malloc(clauses.size() * sizeof(int *));
+    int *clauses_arr = (int *) malloc(clauses.size() * sizeof(int));
+    int clause_offset = 0;
+    int j = 0;
 
     for(int i = 0; i < clauses.size(); i++){
         
-        clauses_arr[i] = (int *) malloc(clauses[i].size() * sizeof(int));
-
+        j = 0;
+        //clauses_arr[i] = (int *) malloc(clauses[i].size() * sizeof(int));
         std::set<int>::iterator pure_literal_itr;
-        int j = 0;
         for(pure_literal_itr = clauses[i].begin(); pure_literal_itr != clauses[i].end(); pure_literal_itr++){
 
-            clauses_arr[i][j] = *pure_literal_itr;
+            clauses_arr[j + clause_offset] = *pure_literal_itr;
             j++;
         }
+
+        clause_offset += clauses[i].size();
     }
 
 
@@ -109,43 +122,42 @@ int *BruteForce::get_clauses_length_arr(std::vector<std::set<int> > clauses){
     return clauses_length_arr;
 }
 
+int get_sum_length_of_clauses(std::vector<std::set<int> > clauses){
+
+    int sum = 0;
+
+    for(int i = 0; i < clauses.size(); i++){
+
+        sum += clauses[i].size();
+    }
+
+
+    return sum;
+}
+
 int BruteForce::brute_force_parallel(std::vector<std::set<int> > clauses, int nvars){
 
-    printf("Beginning of brute force on GPU\n");
     // Number of assignments
     int num_of_assignments = (double) pow(2.0, (double) nvars);
 
     // Allocate memory for the clauses on the host, fill with clause arrays, and move to the device
-    printf("Before clauses to array\n");
-    int **clauses_arr_host = clauses_to_array(clauses);
-    printf("After clauses to array\n");
-    int **clauses_arr_device;
-    printf("Before cudaMalloc\n");
-    cudaMalloc(&clauses_arr_device, clauses.size() * sizeof(int *));
-    printf("After cudaMalloc\n");
-    for(int i = 0; i < clauses.size(); i++){
+    int *clauses_arr_host = clauses_to_array(clauses);
 
-        // This is segfaulting
-        printf("AAA\n");
-        cudaMalloc(&(clauses_arr_device[i]), clauses[i].size() * sizeof(int));
+    int sum_length_of_clauses = get_sum_length_of_clauses(clauses);
+    int *clauses_arr_device;
+    // Allocate memory for the clauses array
+    cudaMalloc(&clauses_arr_device, sum_length_of_clauses * sizeof(int));
 
-        printf("BBB\n");
-        // Copy values to device
-        cudaMemcpy(clauses_arr_device[i], clauses_arr_host[i], clauses[i].size() * sizeof(int), cudaMemcpyHostToDevice);
-        printf("CCC\n");
-    }
-
+    // Copy values to device
+    cudaMemcpy(clauses_arr_device, clauses_arr_host, sum_length_of_clauses * sizeof(int), cudaMemcpyHostToDevice);
 
     // Allocate memory that maps clause index to the number of variables in the clause
     int *clauses_length_arr_host = get_clauses_length_arr(clauses);
-    printf("BBB");
     int *clauses_length_arr_device;
     cudaMalloc(&clauses_length_arr_device, clauses.size() * sizeof(int));
-    printf("CCC");
 
     // Copy values to device
     cudaMemcpy(clauses_length_arr_device, clauses_length_arr_host, clauses.size() * sizeof(int), cudaMemcpyHostToDevice);
-    printf("DDD");
 
     // Allocate memory for an array that stores the result of each assignment in an array of length 2^nvars
     int *var_assignment_output_host = (int *) malloc(sizeof(int) * num_of_assignments);
@@ -155,24 +167,24 @@ int BruteForce::brute_force_parallel(std::vector<std::set<int> > clauses, int nv
     // Spawn enough kernels to test all 2^nvars possible assignments
     int threadsPerBlock = 256;
     int blocksPerGrid = (num_of_assignments) / threadsPerBlock + 1;
-    printf("Calling kernel\n");
     // Call the kernel
     brute_force_kernel<<<blocksPerGrid, threadsPerBlock>>>(clauses_arr_device, clauses_length_arr_device, clauses.size(), var_assignment_output_device, num_of_assignments);
 
     // Synchronize threads
     cudaDeviceSynchronize();
-    printf("Ending kernel\n");
 
     // Move values back to host code
     cudaMemcpy(var_assignment_output_host, var_assignment_output_device, sizeof(int) * num_of_assignments, cudaMemcpyDeviceToHost);
 
-    // Scan through array to determine if there is a one
-    thrust::exclusive_scan(thrust::host, var_assignment_output_host, var_assignment_output_host + num_of_assignments, var_assignment_output_host, 0);
-
     int *iter;
     // Perform find_if to determine if there is a one
-    iter = thrust::find_if(thrust::device, var_assignment_output_host, var_assignment_output_host + num_of_assignments, is_one());
-    int result = *iter;
+    iter = thrust::find_if(thrust::host, var_assignment_output_host, var_assignment_output_host + num_of_assignments, is_one());
+    int result;
+    if(iter == var_assignment_output_host + num_of_assignments){
+        result = 0;
+    }else{
+        result = 1;
+    }
     // Free host memory
     free(clauses_arr_host);
     free(clauses_length_arr_host);
