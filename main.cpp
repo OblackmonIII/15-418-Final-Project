@@ -6,6 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include "bruteForce.h"
 
 using namespace std;
 
@@ -28,7 +29,14 @@ bool test_assignment(bool *var_assignment, int nvars, std::vector<set<int> > cla
             // if the value is false, negate the assignment
             // otw, leave it the same             
             int index = std::abs(*itr) - 1;
-            result = result || var_assignment[index];
+
+            if(*itr > 0){
+
+                result = result || var_assignment[index];
+            }else{
+
+                result = result || !var_assignment[index];
+            }
         } 
         
         if(!result){
@@ -51,13 +59,11 @@ std::string clauses_to_string(std::vector<set<int> > clauses){
 
         if(clauses[i].size() != 0){
 
-            cout << to_string(clauses[i].size()) << endl;
             set<int>::iterator itr;
             for(itr = clauses[i].begin(); itr != clauses[i].end(); itr++){
                 // Take absolute value of the variable
                 // if the value is false, negate the assignment
                 // otw, leave it the same             
-                cout << *itr << endl;
                 result += to_string(*itr) + " | ";
             } 
         
@@ -283,7 +289,6 @@ bool check_for_empty_clauses(std::vector<set<int> > clauses){
 
     for(int i = 0; i < clauses.size(); i++){
 
-        cout << clauses[i].size() << endl;
         if(clauses[i].empty()){
 
             return true;
@@ -304,7 +309,7 @@ set<int> get_literals(std::vector<set<int> > clauses){
     return literals;
 }
 
-int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
+int dpll(std::vector<set<int> > clauses, int nvars){
 
     // Return 1 if satisfiable
     // Return -1 if unsatisfiable
@@ -314,7 +319,6 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
 
         clauses = unit_propagate(clauses, clauses.size(), unit_clause_variable);
 
-        cout << clauses_to_string(clauses) << endl;
     }
 
 
@@ -334,7 +338,7 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
     // Check for empty clauses
     if(check_for_empty_clauses(clauses)){
 
-        return -1;
+        return 0;
     }
 
     set<int> literals = get_literals(clauses);
@@ -343,17 +347,52 @@ int dpll(std::vector<set<int> > clauses, int nclauses, int nvars){
     set<int> new_set;
     new_set.insert(literal_choice);
     clauses.push_back(new_set);
-    result = dpll(clauses, clauses.size(), nvars);
+    result = dpll(clauses, clauses.size());
 
-    if(result == -1){
+    if(result == 0){
 
         clauses[clauses.size() - 1].erase(literal_choice);
         clauses[clauses.size() - 1].insert(-1 * literal_choice);
-        result = dpll(clauses, clauses.size(), nvars);
+        result = dpll(clauses, clauses.size());
     }
 
     return result;
 }
+
+
+int **clauses_to_array(std::vector<set<int>> clauses){
+
+    int **clauses_arr = (int **) malloc(clauses.size() * sizeof(int *));
+
+    for(int i = 0; i < clauses.size(); i++){
+        
+        clauses_arr[i] = (int *) malloc(clauses[i].size() * sizeof(int));
+
+        set<int>::iterator pure_literal_itr;
+        int j = 0;
+        for(pure_literal_itr = clauses[i].begin(); pure_literal_itr != clauses[i].end(); pure_literal_itr++){
+
+            clauses_arr[i][j] = *pure_literal_itr;
+            j++;
+        }
+    }
+
+
+    return clauses_arr;
+}
+
+int *get_clauses_length_arr(std::vector<set<int>> clauses){
+
+    int *clauses_length_arr = (int *) malloc(clauses.size() * sizeof(int));
+
+    for(int i = 0; i < clauses.size(); i++){
+
+        clauses_length_arr[i] = clauses[i].size();
+    }
+
+    return clauses_length_arr;
+}
+
 
 int main(int argc, char **argv){
 
@@ -368,18 +407,41 @@ int main(int argc, char **argv){
     int nclauses;
     std::vector<set<int> > clauses;
 
+    string input_file_name;
+    string mode;
+
+    // Parsing commandline arguments
+    if(argc < 3){
+
+        cout << "Invalid number of arguments. Please try again by specifying an input file and computation mode" << endl;
+        return -1;
+    }
+
+    for(int i = 1; i < argc; i++){
+
+        if(string("-i").compare(argv[i]) == 0){
+
+            input_file_name = argv[i + 1];
+        }
+
+        if(string("-m").compare(argv[i]) == 0){
+
+            mode = argv[i + 1];
+        }
+    }
+
     // Open file
     std::ifstream input_file;
-    input_file.open(argv[1], std::ifstream::in);
+    input_file.open(input_file_name, std::ifstream::in);
     if(input_file.is_open()){
         
         initialize_variables(&input_file, &nvars, &clauses, &nclauses);
     }else{
-        
+
+        cout << "Failed to open file. Please ensure the file exists and the path is correct \n";
         return -1;
     }
 
-    //cin >> nvars >> nclauses;
     bool *var_assignments = new bool[nvars]; 
 
     // Construct SAT struct
@@ -394,14 +456,23 @@ int main(int argc, char **argv){
     cout << clauses_string;
 
     var_assignments[0] = false;
-    var_assignments[1] = true;
+    var_assignments[1] = false;
 
+    //cout << "Testing different assingments: " << test_assignment(var_assignments, nvars, clauses, nclauses) << endl;
     // Call DPLL on the struct
+    int result;
+    if(mode == "serial"){
 
-    int result = dpll(clauses, nclauses, nvars);
+        result = dpll(clauses, nvars);
+
+    }else if(mode == "brute_force"){
+
+        BruteForce *bf = new BruteForce();
+        result = bf->brute_force_parallel(clauses, nvars);
+    }
 
     // Print result
-    cout << "1 if SAT -1 if not: " << result << endl;
+    cout << "1 if SAT 0 if not: " << result << endl;
 
     return 0;
 }
