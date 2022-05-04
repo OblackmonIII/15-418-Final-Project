@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include "bruteForce.h"
+#include "CycleTimer.h"
 
 using namespace std;
 
@@ -409,7 +410,7 @@ int main(int argc, char **argv){
 
     string input_file_name;
     string mode;
-
+    
     // Parsing commandline arguments
     if(argc < 3){
 
@@ -462,13 +463,20 @@ int main(int argc, char **argv){
     // Call DPLL on the struct
     int result;
     if(mode == "serial"){
-
+        double startTime = CycleTimer::currentSeconds();
         result = dpll(clauses, nvars);
-
-    }else if(mode == "brute_force"){
-
+        double endTime = CycleTimer::currentSeconds();
+        double serialDuration = endTime - startTime;
+        printf("Overall serial time: %.3f s\t\n", serialDuration);
+    }
+    else if(mode == "brute_force"){
+        double startTimeBrute = CycleTimer::currentSeconds();
         BruteForce *bf = new BruteForce();
         result = bf->brute_force_parallel(clauses, nvars);
+        double endTimeBrute = CycleTimer::currentSeconds();
+        double bruteDuration = endTimeBrute - startTimeBrute;
+        printf("Overall brute force parallel time: %.3f s\t\n", bruteDuration);
+
     }
 
     // Print result
