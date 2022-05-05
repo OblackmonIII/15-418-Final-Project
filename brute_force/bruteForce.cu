@@ -187,13 +187,9 @@ int BruteForce::brute_force_parallel(std::vector<std::set<int> > clauses, int nv
     }
 
     // Free host memory
-    printf("AAA\n");
     free(clauses_arr_host);
-    printf("BBB\n");
     free(clauses_length_arr_host);
-    printf("CCC\n");
     free(var_assignment_output_host);
-    printf("DDD\n");
 
     // Free device memory
     cudaFree(clauses_arr_device);

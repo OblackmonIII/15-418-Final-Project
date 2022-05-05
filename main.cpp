@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include "brute_force/bruteForce.h"
+#include "mixed_dpll/mixed_dpll.h"
 #include "CycleTimer.h"
 
 using namespace std;
@@ -477,6 +478,10 @@ int main(int argc, char **argv){
         double bruteDuration = endTimeBrute - startTimeBrute;
         printf("Overall brute force parallel time: %.3f s\t\n", bruteDuration);
 
+    }else if(mode == "mixed"){
+
+        MixedDPLL *mdpll = new MixedDPLL();
+        result = mdpll->dpll_wrapper(clauses, nvars);
     }
 
     // Print result
