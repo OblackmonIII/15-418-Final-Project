@@ -6,7 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include "bruteForce.h"
+#include "brute_force/bruteForce.h"
 #include "CycleTimer.h"
 
 using namespace std;
