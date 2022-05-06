@@ -193,8 +193,9 @@ std::vector<set<int> > unit_propagate(std::vector<set<int> > clauses, int nclaus
     }
 
     return new_clauses;    
-
 }
+
+
 bool pure_literals_present(std::vector<set<int> > clauses, int nvars){
 
     bool literal_flag = false;
@@ -227,6 +228,8 @@ bool pure_literals_present(std::vector<set<int> > clauses, int nvars){
 
     return false;
 }
+
+
 int find_pure_literal(std::vector<set<int> > clauses, int nvars){
 
     int pure_literal_variable = 0;
@@ -352,7 +355,6 @@ int dpll(std::vector<set<int> > clauses, int nvars){
     result = dpll(clauses, clauses.size());
 
     if(result == 0){
-
         clauses[clauses.size() - 1].erase(literal_choice);
         clauses[clauses.size() - 1].insert(-1 * literal_choice);
         result = dpll(clauses, clauses.size());
@@ -468,7 +470,7 @@ int main(int argc, char **argv){
         result = dpll(clauses, nvars);
         double endTime = CycleTimer::currentSeconds();
         double serialDuration = endTime - startTime;
-        printf("Overall serial time: %.3f s\t\n", serialDuration);
+        printf("Overall serial time: %.6f s\t\n", serialDuration);
     }
     else if(mode == "brute_force"){
         /*
@@ -477,6 +479,7 @@ int main(int argc, char **argv){
         result = bf->brute_force_parallel(clauses, nvars);
         double endTimeBrute = CycleTimer::currentSeconds();
         double bruteDuration = endTimeBrute - startTimeBrute;
+
         printf("Overall brute force parallel time: %.3f s\t\n", bruteDuration);
         */
 
