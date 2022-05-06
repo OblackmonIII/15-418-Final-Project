@@ -48,26 +48,6 @@ def createNonsatClauses(numVariables, numClauses):
 			if(currNumOfClauses >= numClauses):
 				return clausesText
 
-			clausesText += str(negatedCurrentVariable) + " " + str(negatedNextVariable) + " " + str(nextNextVariable) + "\n"
-			currNumOfClauses += 1
-			if(currNumOfClauses >= numClauses):
-				return clausesText
-
-			clausesText += str(negatedCurrentVariable) + " " + str(nextVariable) + " " + str(negatedNextNextVariable) + "\n"
-			currNumOfClauses += 1
-			if(currNumOfClauses >= numClauses):
-				return clausesText
-
-			clausesText += str(currentVariable) + " " + str(negatedNextVariable) + " " + str(negatedNextNextVariable) + "\n"
-			currNumOfClauses += 1
-			if(currNumOfClauses >= numClauses):
-				return clausesText
-
-			clausesText += str(currentVariable) + " " + str(nextVariable) + " " + str(negatedNextNextVariable) + "\n"
-			currNumOfClauses += 1
-			if(currNumOfClauses >= numClauses):
-				return clausesText	
-
 			clausesText += str(currentVariable) + " " + str(negatedNextVariable) + " " + str(nextNextVariable) + "\n"
 			currNumOfClauses += 1
 			if(currNumOfClauses >= numClauses):
