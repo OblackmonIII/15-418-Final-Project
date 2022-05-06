@@ -86,7 +86,7 @@ struct is_one
   }
 };
 
-__host__ int *BruteForce::clauses_to_array(std::vector<std::set<int> > clauses, int sum_length_of_clauses){
+__host__ int *clauses_to_array_b(std::vector<std::set<int> > clauses, int sum_length_of_clauses){
 
     int *clauses_arr = (int *) malloc(sum_length_of_clauses * sizeof(int));
     int clause_offset = 0;
@@ -110,7 +110,7 @@ __host__ int *BruteForce::clauses_to_array(std::vector<std::set<int> > clauses, 
     return clauses_arr;
 }
 
-int *BruteForce::get_clauses_length_arr(std::vector<std::set<int> > clauses){
+int *get_clauses_length_arr_b_b(std::vector<std::set<int> > clauses){
 
     int *clauses_length_arr = (int *) malloc(clauses.size() * sizeof(int));
 
@@ -122,7 +122,7 @@ int *BruteForce::get_clauses_length_arr(std::vector<std::set<int> > clauses){
     return clauses_length_arr;
 }
 
-int get_sum_length_of_clauses(std::vector<std::set<int> > clauses){
+int get_sum_length_of_clauses_b(std::vector<std::set<int> > clauses){
 
     int sum = 0;
 
@@ -141,8 +141,8 @@ int BruteForce::brute_force_parallel(std::vector<std::set<int> > clauses, int nv
     int num_of_assignments = (double) pow(2.0, (double) nvars);
 
     // Allocate memory for the clauses on the host, fill with clause arrays, and move to the device
-    int sum_length_of_clauses = get_sum_length_of_clauses(clauses);
-    int *clauses_arr_host = clauses_to_array(clauses, sum_length_of_clauses);
+    int sum_length_of_clauses = get_sum_length_of_clauses_b(clauses);
+    int *clauses_arr_host = clauses_to_array_b(clauses, sum_length_of_clauses);
 
     int *clauses_arr_device;
     // Allocate memory for the clauses array
@@ -152,7 +152,7 @@ int BruteForce::brute_force_parallel(std::vector<std::set<int> > clauses, int nv
     cudaMemcpy(clauses_arr_device, clauses_arr_host, sum_length_of_clauses * sizeof(int), cudaMemcpyHostToDevice);
 
     // Allocate memory that maps clause index to the number of variables in the clause
-    int *clauses_length_arr_host = get_clauses_length_arr(clauses);
+    int *clauses_length_arr_host = get_clauses_length_arr_b_b(clauses);
     int *clauses_length_arr_device;
     cudaMalloc(&clauses_length_arr_device, clauses.size() * sizeof(int));
 
@@ -187,13 +187,9 @@ int BruteForce::brute_force_parallel(std::vector<std::set<int> > clauses, int nv
     }
 
     // Free host memory
-    printf("AAA\n");
     free(clauses_arr_host);
-    printf("BBB\n");
     free(clauses_length_arr_host);
-    printf("CCC\n");
     free(var_assignment_output_host);
-    printf("DDD\n");
 
     // Free device memory
     cudaFree(clauses_arr_device);

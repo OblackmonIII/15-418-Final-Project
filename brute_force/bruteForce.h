@@ -10,8 +10,6 @@ class BruteForce {
     public:
 
         int brute_force_parallel(std::vector<std::set<int> > clauses, int nvars);
-        int *clauses_to_array(std::vector<std::set<int> > clauses, int sum_length_of_clauses);
-        int *get_clauses_length_arr(std::vector<std::set<int> > clauses);
 };
 
 #endif
