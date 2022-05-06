@@ -6,8 +6,8 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include "mixed_dpll/mixedDpll.h"
 #include "brute_force/bruteForce.h"
-#include "mixed_dpll/mixed_dpll.h"
 #include "CycleTimer.h"
 
 using namespace std;
@@ -471,17 +471,19 @@ int main(int argc, char **argv){
         printf("Overall serial time: %.3f s\t\n", serialDuration);
     }
     else if(mode == "brute_force"){
+        /*
         double startTimeBrute = CycleTimer::currentSeconds();
         BruteForce *bf = new BruteForce();
         result = bf->brute_force_parallel(clauses, nvars);
         double endTimeBrute = CycleTimer::currentSeconds();
         double bruteDuration = endTimeBrute - startTimeBrute;
         printf("Overall brute force parallel time: %.3f s\t\n", bruteDuration);
+        */
 
     }else if(mode == "mixed"){
 
         MixedDPLL *mdpll = new MixedDPLL();
-        result = mdpll->dpll_wrapper(clauses, nvars);
+        result = mdpll->dpll_parallel_wrapper(clauses, nvars);
     }
 
     // Print result

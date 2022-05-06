@@ -1,4 +1,4 @@
-#include "mixed_dpll.h"
+#include "mixedDpll.h"
 #include <thrust/scan.h>
 #include <thrust/execution_policy.h>
 #include <thrust/device_vector.h>
@@ -6,58 +6,6 @@
 #include <iterator>
 #include <set>
 
-__device__ int get_nth_bit(int value, int n){
-
-    return (value >> n) & (1);
-}
-
-__device__ bool test_assignment(int var_assignment_val, int *clauses, int *clause_length_arr, int nclauses){
-
-    // Iterate over clauses
-    // Assign variables found in clauses based on array
-    // If the clause returns false, return 0
-    // Otherwise continue to the next clause
-    // If all clauses return true, return true
-
-    bool result = false;
-    bool var_assignment;
-    int starting_index = 0;
-    int nth_bit;
-    for(int i = 0; i < nclauses; i++){
-        
-        result = false;
-
-        for(int j = starting_index; j < starting_index + clause_length_arr[i]; j++){
-            // Take absolute value of the variable
-            // if the value is false, negate the assignment
-            // otw, leave it the same             
-            int index = std::abs(clauses[j]) - 1;
-            nth_bit = get_nth_bit(var_assignment_val, index);
-            var_assignment =  nth_bit == 0 ? false : true;
-
-
-            if(clauses[j] > 0){
-
-                result = result || var_assignment;
-            }else{
-
-                result = result || !var_assignment;
-            }
-
-        } 
-
-        starting_index += clause_length_arr[i];
-        
-        if(!result){
-
-
-            return result;
-        }
-
-    }
-
-    return result;
-}
 
 __device__ bool contains_literal(int clauseID, int literal, int *clauses_arr_device, int *clauses_start_arr_device, int *clauses_length_arr_device){
 
@@ -96,8 +44,10 @@ __device__ void remove_literal_from_clause(int clauseID, int literal, int *claus
         if(clauses_arr_device[i] == literal){
 
             clauses_arr_device[i] = 0;
+            
         }
     }
+
 }
 
 __global__ void unit_propagate_kernel(int literal, int *clauses_arr_device, int *clauses_start_arr_device, int *clauses_length_arr_device, int nclauses){
@@ -108,14 +58,16 @@ __global__ void unit_propagate_kernel(int literal, int *clauses_arr_device, int 
     */
     int threadId = blockDim.x * blockIdx.x + threadIdx.x;
 
-    if(clauses_start_arr_device[threadId] != -1 && clauses_length_arr_device[threadId] != 0 && threadId < nclauses){
+    if(clauses_start_arr_device[threadId] != -1 && threadId < nclauses){
 
         if(contains_literal(threadId, literal, clauses_arr_device, clauses_start_arr_device, clauses_length_arr_device)){
 
             remove_clause(threadId, clauses_arr_device, clauses_start_arr_device, clauses_length_arr_device);
+        }else{
+
+            remove_literal_from_clause(threadId, -1 * literal, clauses_arr_device, clauses_start_arr_device, clauses_length_arr_device);
         }
 
-        remove_literal_from_clause(threadId, -1 * literal, clauses_arr_device, clauses_start_arr_device, clauses_length_arr_device);
     }
 
 }
@@ -128,7 +80,7 @@ __global__ void pure_literal_kernel(int literal, int *clauses_arr_device, int *c
     */
     int threadId = blockDim.x * blockIdx.x + threadIdx.x;
 
-    if(clauses_start_arr_device[threadId] != -1 && clauses_length_arr_device[threadId] != 0){
+    if(clauses_start_arr_device[threadId] != -1){
 
         if(contains_literal(threadId, literal, clauses_arr_device, clauses_start_arr_device, clauses_length_arr_device)){
 
@@ -138,14 +90,6 @@ __global__ void pure_literal_kernel(int literal, int *clauses_arr_device, int *c
 
 }
 
-struct is_one
-{
-  __host__ __device__
-  bool operator()(int x)
-  {
-    return x == 1;
-  }
-};
 
 __host__ int *clauses_to_array(std::vector<std::set<int> > clauses, int sum_length_of_clauses){
 
@@ -170,7 +114,7 @@ __host__ int *clauses_to_array(std::vector<std::set<int> > clauses, int sum_leng
     return clauses_arr;
 }
 
-__host__ int *get_clauses_length_arr(std::vector<std::set<int> > clauses){
+__host__ int *get_clauses_length_arr_m(std::vector<std::set<int> > clauses){
 
     int *clauses_length_arr = (int *) malloc(clauses.size() * sizeof(int));
 
@@ -196,7 +140,7 @@ __host__ int *get_clauses_start_arr(std::vector<std::set<int> > clauses){
 }
 
 
-int get_sum_length_of_clauses(std::vector<std::set<int> > clauses){
+int get_sum_length_clauses_m(std::vector<std::set<int> > clauses){
 
     int sum = 0;
 
@@ -294,15 +238,29 @@ int get_number_of_clauses(int *clauses_start_arr_host, int *clauses_length_arr_h
     return count;
 }
 
-bool check_for_empty_clauses(int *clauses_start_arr_host, int *clauses_length_arr_host, int num_of_clauses){
+bool check_for_empty_clauses(int *clauses_arr_host, int *clauses_start_arr_host, int *clauses_length_arr_host, int num_of_clauses){
 
-    // Check if a clause is still in the expression, but has length 0
+    // Check if a clause is still in the expression, but has all zeros
 
     for(int i = 0; i < num_of_clauses; i++){
 
-        if(clauses_start_arr_host[i] != -1 && clauses_length_arr_host[i] == 0){
+        if(clauses_start_arr_host[i] != -1){
 
-            return true;
+            bool seen_all_zeros = true;
+            for(int j = clauses_start_arr_host[i]; j < clauses_start_arr_host[i] + clauses_length_arr_host[i]; j++){
+
+                if(clauses_arr_host[j] != 0){
+
+                    seen_all_zeros = false;
+                }
+
+            }
+
+            if(seen_all_zeros){
+
+                return true;
+
+            }
         }
     }
 
@@ -355,12 +313,15 @@ int MixedDPLL::mixed_dpll_parallel(int *clauses_arr_host, int sum_length_of_clau
     cudaMalloc(&clauses_start_arr_device, num_of_clauses * sizeof(int));
     cudaMemcpy(clauses_start_arr_device, clauses_start_arr_host, num_of_clauses * sizeof(int), cudaMemcpyHostToDevice);
 
+    
     int threadsPerBlock = 256;
     int blocksPerGrid = (num_of_clauses) / threadsPerBlock + 1;
     int result = 0;
 
     // This code block handles unit propagation
     int literal = unit_clauses_present(clauses_arr_host, sum_length_of_clauses, clauses_length_arr_host, clauses_start_arr_host, num_of_clauses);
+    printf("Before unit prop\n");
+    printf("Literal: %d\n", literal);
     while(literal != 0){
 
         unit_propagate_kernel<<<blocksPerGrid, threadsPerBlock>>>(literal, clauses_arr_device, clauses_start_arr_device, clauses_length_arr_device, num_of_clauses);
@@ -370,10 +331,13 @@ int MixedDPLL::mixed_dpll_parallel(int *clauses_arr_host, int sum_length_of_clau
         cudaMemcpy(clauses_length_arr_host, clauses_length_arr_device, num_of_clauses * sizeof(int), cudaMemcpyDeviceToHost);
 
         literal = unit_clauses_present(clauses_arr_host, sum_length_of_clauses, clauses_length_arr_host, clauses_start_arr_host, num_of_clauses);
+        printf("Literal: %d\n", literal);
     }
+    printf("After unit prop\n");
 
     // This code block handles pure literal assignmet
-    literal = pure_literal_present(clauses_arr_host, sum_length_of_clauses, clauses_length_arr_host, clauses_start_arr_host, num_of_clauses);
+    literal = pure_literal_present(clauses_arr_host, sum_length_of_clauses, clauses_start_arr_host, clauses_length_arr_host, num_of_clauses);
+    printf("Before pure lit\n");
     while(literal != 0){
 
         // Needs parallelism
@@ -385,9 +349,10 @@ int MixedDPLL::mixed_dpll_parallel(int *clauses_arr_host, int sum_length_of_clau
         cudaMemcpy(clauses_start_arr_host, clauses_start_arr_device, num_of_clauses * sizeof(int), cudaMemcpyDeviceToHost);
         cudaMemcpy(clauses_length_arr_host, clauses_length_arr_device, num_of_clauses * sizeof(int), cudaMemcpyDeviceToHost);
 
-        literal = pure_literal_present(clauses_arr_host, sum_length_of_clauses, clauses_length_arr_host, clauses_start_arr_host, num_of_clauses);
+        literal = pure_literal_present(clauses_arr_host, sum_length_of_clauses, clauses_start_arr_host, clauses_length_arr_host, num_of_clauses);
 
     }
+    printf("After pure lit\n");
 
     // Check if there are no more clauses
     if(get_number_of_clauses(clauses_start_arr_host, clauses_length_arr_host, num_of_clauses) == 0){
@@ -396,7 +361,7 @@ int MixedDPLL::mixed_dpll_parallel(int *clauses_arr_host, int sum_length_of_clau
     }
 
     // Check for empty clauses
-    if(check_for_empty_clauses(clauses_start_arr_host, clauses_length_arr_host, num_of_clauses)){
+    if(check_for_empty_clauses(clauses_arr_host, clauses_start_arr_host, clauses_length_arr_host, num_of_clauses)){
 
         // Checking for empty clauses can probably be done in parallel
         return 0;
@@ -440,12 +405,12 @@ int MixedDPLL::mixed_dpll_parallel(int *clauses_arr_host, int sum_length_of_clau
 int MixedDPLL::dpll_parallel_wrapper(std::vector<std::set<int> > clauses, int nvars){
 
     // Allocate memory for the clauses on the host, fill with clause arrays, and move to the device
-    int sum_length_of_clauses = get_sum_length_of_clauses(clauses);
+    int sum_length_of_clauses = get_sum_length_clauses_m(clauses);
     int *clauses_arr_host = clauses_to_array(clauses, sum_length_of_clauses);
-    int *clauses_length_arr_host = get_clauses_length_arr(clauses);
+    int *clauses_length_arr_host = get_clauses_length_arr_m(clauses);
     int *clauses_start_arr_host = get_clauses_start_arr(clauses);
 
-    int result = mixed_dpll_parallel(clauses_arr_host, sum_length_of_clauses, clauses_length_arr_host, clauses_start_arr_host, clauses.size(), nvars);
+    int result = mixed_dpll_parallel(clauses_arr_host, sum_length_of_clauses, clauses_start_arr_host, clauses_length_arr_host, clauses.size(), nvars);
     
     free(clauses_arr_host);
     free(clauses_length_arr_host);
